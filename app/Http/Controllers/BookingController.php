@@ -102,21 +102,39 @@ class BookingController extends Controller
         return redirect()->back()->with('success', 'Pengajuan revisi harga berhasil dikirim!');
     }
 
-    public function pay(Request $request, Booking $booking)
+    public function showPaymentForm(Request $request, Booking $booking)
+    {
+        // Pastikan hanya pelanggan yang bersangkutan yang bisa melihat form pembayaran
+        if ($booking->customer_id !== Auth::id()) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk melakukan tindakan ini.');
+        }
+
+        // Tampilkan view untuk pembayaran
+        return view('pelanggan.bookings.pay', compact('booking'));
+    }
+
+    public function processPayment(Request $request, Booking $booking)
     {
         if ($booking->customer_id !== Auth::id()) {
             return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk melakukan tindakan ini.');
         }
 
-        if ($booking->payment_status === 'paid') {
-            return redirect()->back()->with('error', 'Booking ini sudah dibayar.');
+        if ($booking->payment_status !== 'pending') {
+            return redirect()->back()->with('error', 'Pembayaran untuk booking ini tidak dapat diproses.');
         }
 
-        $booking->payment_status = 'paid';
-        $booking->final_price = $booking->revised_price ?? $booking->estimated_price;
+        $request->validate([
+            'payment_proof' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Store the payment proof
+        $path = $request->file('payment_proof')->store('public/proofs');
+
+        $booking->payment_proof = $path;
+        $booking->payment_status = 'verifying';
         $booking->save();
 
-        return redirect()->back()->with('success', 'Pembayaran berhasil dilakukan!');
+        return redirect()->route('pelanggan.dashboard')->with('success', 'Bukti pembayaran berhasil diunggah. Menunggu verifikasi admin.');
     }
 
     public function confirmCompletion(Request $request, Booking $booking)

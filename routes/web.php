@@ -10,6 +10,9 @@ use App\Http\Controllers\TeknisiListController;
 use App\Http\Controllers\TechnicianServiceWebController; // Import new controller
 use App\Http\Controllers\BookingController; // Import BookingController
 use App\Http\Controllers\ReviewController; // Import ReviewController
+use App\Http\Controllers\Admin\PaymentVerificationController;
+use App\Http\Controllers\Admin\PayoutController;
+use App\Http\Controllers\Admin\ReportController;
 
 
 /*
@@ -59,7 +62,24 @@ Route::post('/bookings/{booking}/reject', [BookingController::class, 'reject'])-
 Route::put('/bookings/{booking}/status', [BookingController::class, 'updateStatus'])->name('bookings.updateStatus')->middleware(['auth', 'role:teknisi']);
 Route::put('/bookings/{booking}/price-revision', [BookingController::class, 'requestPriceRevision'])->name('bookings.requestPriceRevision')->middleware(['auth', 'role:teknisi']);
 
-Route::post('/bookings/{booking}/pay', [BookingController::class, 'pay'])->name('bookings.pay')->middleware(['auth', 'role:pelanggan']);
+// Routes for payment
+Route::get('/bookings/{booking}/pay', [BookingController::class, 'showPaymentForm'])->name('bookings.pay.form')->middleware(['auth', 'role:pelanggan']);
+Route::post('/bookings/{booking}/pay', [BookingController::class, 'processPayment'])->name('bookings.pay.process')->middleware(['auth', 'role:pelanggan']);
+
 Route::post('/bookings/{booking}/confirm-completion', [BookingController::class, 'confirmCompletion'])->name('bookings.confirmCompletion')->middleware(['auth', 'role:pelanggan']);
 
 Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store')->middleware(['auth', 'role:pelanggan']);
+// Admin Routes
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Payment Verification
+    Route::get('/payments', [PaymentVerificationController::class, 'index'])->name('payments.index');
+    Route::post('/payments/{booking}/approve', [PaymentVerificationController::class, 'approve'])->name('payments.approve');
+    Route::post('/payments/{booking}/reject', [PaymentVerificationController::class, 'reject'])->name('payments.reject');
+
+    // Payouts
+    Route::get('/payouts', [PayoutController::class, 'index'])->name('payouts.index');
+    Route::post('/payouts/{technician}', [PayoutController::class, 'store'])->name('payouts.store');
+
+    // Reports
+    Route::get('/reports/commission', [ReportController::class, 'commissionReport'])->name('reports.commission');
+});

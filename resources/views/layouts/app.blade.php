@@ -44,12 +44,18 @@
                             <a class="nav-link" href="{{ route('home') }}">Dashboard</a>
                         </li>
                     @endauth
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('layanan.index') }}">Layanan</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('teknisi.index') }}">Teknisi</a>
-                    </li>
+                    
+                    @if(!Auth::check() || Auth::user()->role === 'teknisi')
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('layanan.index') }}">Layanan</a>
+                        </li>
+                    @endif
+                    @if(!Auth::check() || Auth::user()->role === 'pelanggan')
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('teknisi.index') }}">Teknisi</a>
+                        </li>
+                    @endif
+
 
                     @auth
                         @if (Auth::user()->role === 'pelanggan')
@@ -73,20 +79,21 @@
                         </li>
                     @else
                         <li class="nav-item">
-                            <a class="nav-link" href="#">{{ Auth::user()->name }}</a>
+                            <span class="nav-link">{{ Auth::user()->name }}</span>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('logout') }}"
                                onclick="event.preventDefault();
                                              document.getElementById('logout-form').submit();">
-                                Logout
+                                {{ __('Logout') }}
                             </a>
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                @csrf
-                            </form>
                         </li>
                     @endguest
                 </ul>
+
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                    @csrf
+                </form>
 
             </div>
         </div>

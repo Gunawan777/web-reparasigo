@@ -20,6 +20,8 @@ class Booking extends Model
         'status',
         'payment_status',
         'final_price',
+        'commission_amount',
+        'payout_status',
     ];
 
     public function customer()

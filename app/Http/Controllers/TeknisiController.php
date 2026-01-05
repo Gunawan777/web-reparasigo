@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class TeknisiController extends Controller
 {
@@ -15,7 +17,28 @@ class TeknisiController extends Controller
      */
     public function index()
     {
-        return view('teknisi.dashboard');
+        $technicianId = Auth::id();
+
+        // Calculate current balance (paid by customer, not paid out by admin)
+        $balance = Booking::where('technician_id', $technicianId)
+                            ->where('payment_status', 'paid')
+                            ->where('payout_status', 'unpaid')
+                            ->sum(DB::raw('final_price - commission_amount'));
+
+        // Calculate total amount paid out by admin
+        $totalPaidOut = Booking::where('technician_id', $technicianId)
+                                ->where('payout_status', 'paid')
+                                ->sum(DB::raw('final_price - commission_amount'));
+
+        // Calculate lifetime earnings
+        $totalEarnings = $balance + $totalPaidOut;
+
+        // Calculate percentages for the doughnut chart
+        $paidOutPercentage = ($totalEarnings > 0) ? ($totalPaidOut / $totalEarnings) * 100 : 0;
+        $balancePercentage = ($totalEarnings > 0) ? ($balance / $totalEarnings) * 100 : 0;
+
+
+        return view('teknisi.dashboard', compact('balance', 'totalPaidOut', 'totalEarnings', 'paidOutPercentage', 'balancePercentage'));
     }
 
     /**

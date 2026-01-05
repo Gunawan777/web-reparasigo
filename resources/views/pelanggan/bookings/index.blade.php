@@ -34,11 +34,8 @@
                                     <p>Status Pengerjaan: {{ ucfirst($booking->status) }}</p>
                                     <p>Status Pembayaran: {{ ucfirst($booking->payment_status) }}</p>
                                     <div class="mt-2">
-                                        @if ($booking->status == 'accepted' && $booking->payment_status == 'pending')
-                                            <form action="{{ route('bookings.pay', $booking->id) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                <button type="submit" class="btn btn-success btn-sm">Bayar Sekarang</button>
-                                            </form>
+                                        @if ($booking->payment_status == 'pending' && !in_array($booking->status, ['rejected', 'cancelled', 'pending']))
+                                            <a href="{{ route('bookings.pay.form', $booking->id) }}" class="btn btn-success btn-sm">Bayar Sekarang</a>
                                         @endif
                                         @if ($booking->status == 'in_progress' && $booking->payment_status == 'paid')
                                             <form action="{{ route('bookings.confirmCompletion', $booking->id) }}" method="POST" class="d-inline">
